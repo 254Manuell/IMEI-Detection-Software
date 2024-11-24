@@ -1,189 +1,92 @@
-{
-  "nbformat": 4,
-  "nbformat_minor": 0,
-  "metadata": {
-    "colab": {
-      "provenance": [],
-      "authorship_tag": "ABX9TyPZDbmzjjql6PJrHlXu5yyv",
-      "include_colab_link": true
-    },
-    "kernelspec": {
-      "name": "python3",
-      "display_name": "Python 3"
-    },
-    "language_info": {
-      "name": "python"
-    }
-  },
-  "cells": [
-    {
-      "cell_type": "markdown",
-      "metadata": {
-        "id": "view-in-github",
-        "colab_type": "text"
-      },
-      "source": [
-        "<a href=\"https://colab.research.google.com/github/254Manuell/254Manuell/blob/main/IMEI%20Detection%20software\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "!pip install psutil"
-      ],
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/"
+import platform
+import psutil
+import socket
+import uuid
+import json
+from datetime import datetime
+
+def get_system_info():
+    """
+    Collect system and device information for the local machine
+    """
+    system_info = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "system": {
+            "os": platform.system(),
+            "os_version": platform.version(),
+            "architecture": platform.machine(),
+            "processor": platform.processor(),
+            "hostname": socket.gethostname(),
         },
-        "id": "qshRWafprFUj",
-        "outputId": "1ca3c477-dd1e-4c12-e471-ce6a7285fad0"
-      },
-      "execution_count": 1,
-      "outputs": [
-        {
-          "output_type": "stream",
-          "name": "stdout",
-          "text": [
-            "Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (5.9.5)\n"
-          ]
-        }
-      ]
-    },
-    {
-      "cell_type": "code",
-      "source": [
-        "import platform\n",
-        "import psutil\n",
-        "import socket\n",
-        "import uuid\n",
-        "import json\n",
-        "from datetime import datetime\n",
-        "\n",
-        "def get_system_info():\n",
-        "    \"\"\"\n",
-        "    Collect system and device information for the local machine\n",
-        "    \"\"\"\n",
-        "    system_info = {\n",
-        "        \"timestamp\": datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\"),\n",
-        "        \"system\": {\n",
-        "            \"os\": platform.system(),\n",
-        "            \"os_version\": platform.version(),\n",
-        "            \"architecture\": platform.machine(),\n",
-        "            \"processor\": platform.processor(),\n",
-        "            \"hostname\": socket.gethostname(),\n",
-        "        },\n",
-        "        \"hardware\": {\n",
-        "            \"cpu_count\": psutil.cpu_count(),\n",
-        "            \"memory_total\": psutil.virtual_memory().total,\n",
-        "            \"memory_available\": psutil.virtual_memory().available,\n",
-        "            \"disk_partitions\": [partition.device for partition in psutil.disk_partitions()],\n",
-        "        },\n",
-        "        \"network\": {\n",
-        "            \"hostname\": socket.gethostname(),\n",
-        "            \"mac_address\": ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff)\n",
-        "                                   for elements in range(0,8*6,8)][::-1]),\n",
-        "        }\n",
-        "    }\n",
-        "    return system_info\n",
-        "\n",
-        "def get_info_by_ip(ip_address):\n",
-        "    \"\"\"\n",
-        "    Retrieve system information for a given IP address.\n",
-        "    Only resolves basic details like hostname. For more, you need remote access.\n",
-        "    \"\"\"\n",
-        "    try:\n",
-        "        hostname, alias, address_list = socket.gethostbyaddr(ip_address)\n",
-        "        network_info = {\n",
-        "            \"ip_address\": ip_address,\n",
-        "            \"hostname\": hostname,\n",
-        "            \"alias\": alias,\n",
-        "            \"address_list\": address_list,\n",
-        "        }\n",
-        "        print(f\"Network Information for {ip_address}:\")\n",
-        "        for key, value in network_info.items():\n",
-        "            print(f\"  {key.replace('_', ' ').title()}: {value}\")\n",
-        "    except Exception as e:\n",
-        "        print(f\"Error retrieving information for {ip_address}: {e}\")\n",
-        "\n",
-        "def save_system_info(filename=\"system_info.json\"):\n",
-        "    \"\"\"\n",
-        "    Save collected system information to a JSON file\n",
-        "    \"\"\"\n",
-        "    info = get_system_info()\n",
-        "    with open(filename, 'w') as f:\n",
-        "        json.dump(info, f, indent=4)\n",
-        "    print(f\"System information saved to {filename}\")\n",
-        "    return info\n",
-        "\n",
-        "def display_system_info(info):\n",
-        "    \"\"\"\n",
-        "    Display system information in a formatted manner\n",
-        "    \"\"\"\n",
-        "    print(\"\\n=== System Information ===\")\n",
-        "    print(f\"Timestamp: {info['timestamp']}\")\n",
-        "\n",
-        "    print(\"\\nSystem:\")\n",
-        "    for key, value in info['system'].items():\n",
-        "        print(f\"  {key.replace('_', ' ').title()}: {value}\")\n",
-        "\n",
-        "    print(\"\\nHardware:\")\n",
-        "    for key, value in info['hardware'].items():\n",
-        "        if key == \"memory_total\" or key == \"memory_available\":\n",
-        "            value = f\"{value / (1024**3):.2f} GB\"\n",
-        "        print(f\"  {key.replace('_', ' ').title()}: {value}\")\n",
-        "\n",
-        "    print(\"\\nNetwork:\")\n",
-        "    for key, value in info['network'].items():\n",
-        "        print(f\"  {key.replace('_', ' ').title()}: {value}\")\n",
-        "\n",
-        "# Example usage\n",
-        "if __name__ == \"__main__\":\n",
-        "    target_ip = input(\"Enter the IP address: \")\n",
-        "    get_info_by_ip(target_ip)  # Retrieve network info for the IP address\n",
-        "\n",
-        "    # Collect and save local system information (for comparison)\n",
-        "    local_info = save_system_info()\n",
-        "    display_system_info(local_info)\n"
-      ],
-      "metadata": {
-        "colab": {
-          "base_uri": "https://localhost:8080/"
+        "hardware": {
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "memory_available": psutil.virtual_memory().available,
+            "disk_partitions": [partition.device for partition in psutil.disk_partitions()],
         },
-        "id": "-JFRr0GUsEOq",
-        "outputId": "38c42317-be13-43f8-8e61-f3560b1185e0"
-      },
-      "execution_count": 3,
-      "outputs": [
-        {
-          "output_type": "stream",
-          "name": "stdout",
-          "text": [
-            "Enter the IP address: 41.90.187.122\n",
-            "Error retrieving information for 41.90.187.122: [Errno 1] Unknown host\n",
-            "System information saved to system_info.json\n",
-            "\n",
-            "=== System Information ===\n",
-            "Timestamp: 2024-11-24 15:01:24\n",
-            "\n",
-            "System:\n",
-            "  Os: Linux\n",
-            "  Os Version: #1 SMP PREEMPT_DYNAMIC Thu Jun 27 21:05:47 UTC 2024\n",
-            "  Architecture: x86_64\n",
-            "  Processor: x86_64\n",
-            "  Hostname: b0fc6cc781bc\n",
-            "\n",
-            "Hardware:\n",
-            "  Cpu Count: 2\n",
-            "  Memory Total: 12.67 GB\n",
-            "  Memory Available: 11.57 GB\n",
-            "  Disk Partitions: ['/dev/root', '/dev/sda1', '/dev/sda1', '/dev/sda1']\n",
-            "\n",
-            "Network:\n",
-            "  Hostname: b0fc6cc781bc\n",
-            "  Mac Address: 02:42:ac:1c:00:0c\n"
-          ]
+        "network": {
+            "hostname": socket.gethostname(),
+            "mac_address": ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) 
+                                   for elements in range(0,8*6,8)][::-1]),
         }
-      ]
     }
-  ]
-}
+    return system_info
+
+def get_info_by_ip(ip_address):
+    """
+    Retrieve system information for a given IP address.
+    Only resolves basic details like hostname. For more, you need remote access.
+    """
+    try:
+        hostname, alias, address_list = socket.gethostbyaddr(ip_address)
+        network_info = {
+            "ip_address": ip_address,
+            "hostname": hostname,
+            "alias": alias,
+            "address_list": address_list,
+        }
+        print(f"Network Information for {ip_address}:")
+        for key, value in network_info.items():
+            print(f"  {key.replace('_', ' ').title()}: {value}")
+    except Exception as e:
+        print(f"Error retrieving information for {ip_address}: {e}")
+
+def save_system_info(filename="system_info.json"):
+    """
+    Save collected system information to a JSON file
+    """
+    info = get_system_info()
+    with open(filename, 'w') as f:
+        json.dump(info, f, indent=4)
+    print(f"System information saved to {filename}")
+    return info
+
+def display_system_info(info):
+    """
+    Display system information in a formatted manner
+    """
+    print("\n=== System Information ===")
+    print(f"Timestamp: {info['timestamp']}")
+    
+    print("\nSystem:")
+    for key, value in info['system'].items():
+        print(f"  {key.replace('_', ' ').title()}: {value}")
+    
+    print("\nHardware:")
+    for key, value in info['hardware'].items():
+        if key == "memory_total" or key == "memory_available":
+            value = f"{value / (1024**3):.2f} GB"
+        print(f"  {key.replace('_', ' ').title()}: {value}")
+    
+    print("\nNetwork:")
+    for key, value in info['network'].items():
+        print(f"  {key.replace('_', ' ').title()}: {value}")
+
+# Example usage
+if __name__ == "__main__":
+    target_ip = input("Enter the IP address: ")
+    get_info_by_ip(target_ip)  # Retrieve network info for the IP address
+    
+    # Collect and save local system information (for comparison)
+    local_info = save_system_info()
+    display_system_info(local_info)
